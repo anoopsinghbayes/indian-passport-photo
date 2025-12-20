@@ -2,7 +2,9 @@
   import Cropper from "svelte-easy-crop";
   import { getCroppedImg } from "./crop";
   import GridPhoto from "./GridPhoto.svelte";
-  let image = "src/assets/630x810.svg";
+  // let isLoading=$state(false);
+  let image = $state("src/assets/630x810.svg");
+  let isLoading = $state(false);
   // Define your desired final dimensions
   const DESIRED_WIDTH = 630;
   const DESIRED_HEIGHT = 810;
@@ -10,11 +12,11 @@
   const image_ratio=4/5;
   const items = Array(10).fill(0); // Array to render multiple images for printing
   console.log("Items for print:", items);
-  let crop = { x: 0, y: 0 };
+  let crop = $state({ x: 0, y: 0 });
   const imageWidth= DESIRED_WIDTH * image_ratio;
   const imageHeight= DESIRED_HEIGHT *image_ratio;
   let cropSize = { width:imageWidth / 3, height: imageHeight / 3 };
-  let zoom = 1;
+  let zoom = $state(1);
   let pixelCrop; // This will store the pixel details from the on:cropcomplete event
   let croppedImage = "src/assets/630x810.svg";
 
@@ -30,13 +32,16 @@
   /**
    * Generates the final cropped image data URL
    */
-  async function cropImage() {
+  async function cropImage() {  
+    isLoading=true;
     croppedImage = await getCroppedImg(
       image,
       pixelCrop,
       DESIRED_WIDTH,
       DESIRED_HEIGHT,
     );
+    
+    isLoading=false;
   }
   /**
    * Handles file input change and sets the image property
@@ -67,7 +72,14 @@
   }
 </script>
 
-<main>
+
+{#if isLoading}
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+{:else}
+  <main>
   <section class="main-container dont-print">
     <article>
       <header>Original</header>
@@ -104,48 +116,8 @@
     <GridPhoto {croppedImage} {items} />
   </section>
 </main>
+{/if}
 
-<!-- 
-<main class="dont-print">
-  <div class="image-container">
-    <section class="left">
-      <div
-        class="cropper-wrapper"
-        style="width: {imageWidth / 2}px; height: {imageHeight / 2}px;"
-      >
-        <Cropper
-          aspect={ASPECT_RATIO}
-          {cropSize}
-          {image}
-          bind:crop
-          bind:zoom
-          oncropcomplete={onCropComplete}
-        ></Cropper>
-        <div class="guide-box"></div>
-        <div class="bottom">
-          <input type="file"/>
-        </div>
-      </div>
-     
-    </section>
-
-    <section class="right">
-      {#if croppedImage}
-        <img
-          class="cropped-image"
-          src={croppedImage}
-          alt="Cropped profile"
-          style="width: {imageWidth / 2}px; height: {imageHeight / 2}px;"/>
-      {/if}
-      <div class="bottom">
-         <button on:click={cropImage}>Get Cropped Image</button>
-      </div>
-    </section>
-  </div>
-</main>
-<section class="only-print">
-  <GridPhoto {croppedImage} />
-</section> -->
 
 <style>
   .main-container {
