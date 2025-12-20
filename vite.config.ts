@@ -8,6 +8,6 @@ export default defineConfig({
   base: '/indian-passport-photo/',
   plugins: [svelte()],
   build: {
-    outDir: 'dist'
+    outDir: 'docs'
   }
 });
