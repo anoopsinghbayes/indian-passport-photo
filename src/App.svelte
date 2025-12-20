@@ -3,7 +3,7 @@
   import { getCroppedImg } from "./crop";
   import GridPhoto from "./GridPhoto.svelte";
   // let isLoading=$state(false);
-  let image = $state("src/assets/630x810.svg");
+  let image = $state("./630x810.svg");
   let isLoading = $state(false);
   // Define your desired final dimensions
   const DESIRED_WIDTH = 630;
@@ -18,7 +18,7 @@
   let cropSize = { width:imageWidth / 3, height: imageHeight / 3 };
   let zoom = $state(1);
   let pixelCrop; // This will store the pixel details from the on:cropcomplete event
-  let croppedImage = "src/assets/630x810.svg";
+  let croppedImage = "./630x810.svg";
 
   /**
    * Updates the pixelCrop data whenever the user finishes a crop interaction
