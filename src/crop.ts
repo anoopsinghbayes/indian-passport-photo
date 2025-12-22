@@ -1,4 +1,3 @@
-import {removeBackground} from "@imgly/background-removal"
 
 /**
  * Triggers a file download in the browser.
@@ -29,8 +28,6 @@ export function downloadBlobImage(blob: Blob, fileName: string) {
  * This function is widely available online in examples for both react-easy-crop and svelte-easy-crop.
  */
 export const getCroppedImg = async (imageSrc: string, pixelCrop: any, targetWidth: number, targetHeight: number): Promise<string> => {
-    // const imageWithoutBg = await removeBackground(imageSrc);
-    // const url = URL.createObjectURL(imageWithoutBg);
     return new Promise((resolve, reject) => {
         const image = new Image();
         image.src = imageSrc;

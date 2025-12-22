@@ -22,7 +22,6 @@
     "vite": "^7.2.4"
   },
   "dependencies": {
-    "@imgly/background-removal": "^1.7.0",
     "@picocss/pico": "^2.1.1",
     "@sveltejs/adapter-static": "^3.0.10",
     "svelte-easy-crop": "^5.0.0"
