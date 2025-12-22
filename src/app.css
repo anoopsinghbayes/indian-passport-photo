@@ -1,4 +1,5 @@
 :root{
+  --pico-font-size: 100%;
   --pico-spacing: .5rem;
   --pico-form-element-spacing-vertical: 0.5rem;
   --pico-form-element-spacing-horizontal: 0.5rem; 
@@ -29,7 +30,7 @@
   /* max-width: 1280px; */
   margin: 0 auto;
   /* padding: 2rem; */
-  text-align: center;
+  /* text-align: center; */
   /* place-content: center; */
 }
 .loading{

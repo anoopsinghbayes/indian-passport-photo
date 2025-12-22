@@ -1,16 +1,15 @@
 <script lang="ts">
-    export let croppedImage: string;
-    export let items: number[] = Array(10).fill(0);
+    let {croppedImage,items}=$props();
 </script>
 <div class="print-grid">
     {#each items as _, index}
         <div class="print-grid-item">
-            <img src={croppedImage} alt="Cropped profile" style="width: 35mm; height: 45mm;" />
+        <img src="{croppedImage}" alt="Cropped Image {index + 1}" style="width:35mm; height:45mm;" />
         </div>
     {/each}
 </div>
 <style>
-     .print-grid {
+    .print-grid {
     display: grid;
     place-content: center;
     grid-template-columns: repeat(5, max-content);

@@ -1,57 +1,60 @@
 <script lang="ts">
   import Cropper from "svelte-easy-crop";
-  import { getCroppedImg } from "./crop";
+  import { getCroppedImg, downloadBlobImage } from "./crop";
   import GridPhoto from "./GridPhoto.svelte";
-  // let isLoading=$state(false);
-  let image = $state("./630x810.svg");
-  let isLoading = $state(false);
+  import UploadPhoto from "./UploadPhoto.svelte";
+
+  // Define the app state
+  type AppState = "initial" | "cropping" | "cropped";
+  let appState = $state<AppState>("initial");
+
+  //ImageTitle is "Original" till initial to cropping
+  let init_image = $state("./630x810.svg");
   // Define your desired final dimensions
   const DESIRED_WIDTH = 630;
   const DESIRED_HEIGHT = 810;
-  const ASPECT_RATIO = DESIRED_WIDTH / DESIRED_HEIGHT;
-  const image_ratio=4/5;
+  const ASPECT_RATIO = 7 / 9;
+  const image_ratio = 4 / 5;
   const items = Array(10).fill(0); // Array to render multiple images for printing
-  console.log("Items for print:", items);
+  // console.log("Items for print:", items);
   let crop = $state({ x: 0, y: 0 });
-  const imageWidth= DESIRED_WIDTH * image_ratio;
-  const imageHeight= DESIRED_HEIGHT *image_ratio;
-  let cropSize = { width:imageWidth / 3, height: imageHeight / 3 };
+  const imageWidth = DESIRED_WIDTH * image_ratio;
+  const imageHeight = DESIRED_HEIGHT * image_ratio;
+  let cropSize = { width: imageWidth / 3, height: imageHeight / 3 };
   let zoom = $state(1);
-  let pixelCrop; // This will store the pixel details from the on:cropcomplete event
-  let croppedImage = "./630x810.svg";
+  let pixelCrop = { width: 0, height: 0, x: 0, y: 0 }; // This will store the pixel details from the on:cropcomplete event
+  let croppedImage=$state<string>(
+    "./630x810.svg"
+  );
 
-  /**
-   * Updates the pixelCrop data whenever the user finishes a crop interaction
-   * @param {CustomEvent} e - The cropcomplete event
-   */
-  function onCropComplete(e) {
+  function onCropComplete(e: {
+    percent: { width: number; height: number; x: number; y: number };
+    pixels: { width: number; height: number; x: number; y: number };
+  }) {
     pixelCrop = e.pixels;
-    console.log("Cropped area in pixels:", pixelCrop);
   }
 
-  /**
-   * Generates the final cropped image data URL
-   */
-  async function cropImage() {  
-    isLoading=true;
+  async function downloadCroppedImage(
+    imgName: string = "cropped-image",
+    type: "jpg" | "png" = "jpg",
+  ) {
+    fetch(croppedImage)
+      .then((res) => res.blob())
+      .then((blob) => {
+        downloadBlobImage(blob, `${imgName}.${type}`);
+      });
+  }
+
+  async function cropImage() {
     croppedImage = await getCroppedImg(
-      image,
+      init_image,
       pixelCrop,
       DESIRED_WIDTH,
       DESIRED_HEIGHT,
     );
-    
-    isLoading=false;
+    appState = "cropped";
   }
-  /**
-   * Handles file input change and sets the image property
-   * @param {Event} event
-   */
-  /**
-   * Handles file input change and sets the image property
-   * @param {Event} event
-   */
-  function onFileChange(event) {
+  function onFileChange(event: Event) {
     const input = event.target;
     if (
       input &&
@@ -64,67 +67,86 @@
       reader.onload = (e) => {
         const result = e.target && e.target.result;
         if (typeof result === "string") {
-          image = result;
+          init_image = result;
         }
       };
       reader.readAsDataURL(file);
     }
+    appState = "cropping";
+    croppedImage = "./630x810.svg";
+  }
+
+  function back() {
+    if (appState === "cropped") {
+      appState = "cropping";
+      croppedImage = "./630x810.svg";
+    } else if (appState === "cropping") {
+      appState = "initial";
+      init_image = "./630x810.svg";
+    }
   }
 </script>
 
-
-{#if isLoading}
-  <div class="loading-overlay">
-    <div class="spinner"></div>
-  </div>
-
-{:else}
-  <main>
-  <section class="main-container dont-print">
-    <article>
-      <header>Original</header>
-      <div
-        class="cropper-wrapper"
-        style="width: {imageWidth / 2}px; height: {imageHeight / 2}px;"
-      >
+<!-- <UploadPhoto /> -->
+<section class="main-container">
+  <div class="sub-container dont-print">
+    <header>Make Passport Size Photo </header>
+   
+      <input type="file" style="max-width:550px" accept="image/*" onchange={onFileChange} />
+    
+    <div class="img-holder">
+      <div class="cropper-wrapper image-placeholder">
         <Cropper
           aspect={ASPECT_RATIO}
           {cropSize}
-          {image}
+          image={init_image}
           bind:crop
           bind:zoom
           oncropcomplete={onCropComplete}
         ></Cropper>
         <span class="guide-box"></span>
       </div>
-      <footer>
-        <input type="file" accept="image/*" on:change={onFileChange} />
-      </footer>
-    </article>
-    <article>
-      <header>Cropped</header>
       <img
-        class="cropped-image"
-        src={croppedImage}
+        class="cropped-image image-placeholder"
+        src={croppedImage || "./630x810.svg"}
         alt="Cropped profile"
-        style="width: {imageWidth / 2}px; height: {imageHeight / 2}px;"
       />
-      <footer><button on:click={cropImage}>Get Cropped Image</button></footer>
-    </article>
-  </section>
+    </div>
+    <footer>
+      <!-- <button disabled={appState === "initial"} onclick={back}>Back</button> -->
+      <button disabled={appState !== "cropping" && appState !== "cropped"} onclick={cropImage}>Crop</button>
+      <button
+        disabled={appState !== "cropped"}
+        onclick={() => downloadCroppedImage()}>Download single</button
+      >
+      <button disabled={appState !== "cropped"} onclick={() => window.print()}
+        >Printable</button
+      >
+    </footer>
+  </div>
   <section class="only-print">
     <GridPhoto {croppedImage} {items} />
   </section>
-</main>
-{/if}
-
+</section>
 
 <style>
-  .main-container {
-    /* transform: scale(.65); */
+  header{
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  .img-holder{
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+  }
+  .sub-container {
     display: grid;
-    gap: 5rem;
-    grid-template-columns: 1fr 1fr;
+    padding: 1rem;
+    gap: 1rem;
+
+    place-items: center;
+    /* grid-template-columns: 1fr 1fr; */
   }
   /* Style for the Cropper wrapper */
   .cropper-wrapper {
@@ -148,13 +170,8 @@
     left: calc(100% * var(--padding));
     pointer-events: none; /* Allow interactions to pass through */
   }
-  .print-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 35mm);
-    gap: 2mm;
-    margin-top: 2rem;
-  }
-  .print-grid-item {
-    position: relative;
+  .image-placeholder {
+    width: 252px;
+    aspect-ratio: 7/9;
   }
 </style>
