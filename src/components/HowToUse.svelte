@@ -1,4 +1,4 @@
-<section>
+<section class="dont-print">
     <h2>How to Use</h2>
     <div class="instructions">
         <ol>
@@ -14,7 +14,7 @@
             </li>
             <li>
                 For printing multiple passport size photos, click the <em>"Printable"</em>
-                button to view a grid layout suitable for printing.
+                button to print a 5 X 2 i.e 10 cropped images.
             </li>
         </ol>
     </div>
