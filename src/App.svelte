@@ -1,9 +1,8 @@
 <script lang="ts">
   import Cropper from "svelte-easy-crop";
   import { getCroppedImg, downloadBlobImage } from "./crop";
-  import GridPhoto from "./GridPhoto.svelte";
-  import UploadPhoto from "./UploadPhoto.svelte";
-
+  import GridPhoto from "./components/GridPhoto.svelte";
+  import HowToUse from "./components/HowToUse.svelte";
   // Define the app state
   type AppState = "initial" | "cropping" | "cropped";
   let appState = $state<AppState>("initial");
@@ -35,7 +34,7 @@
   }
 
   async function downloadCroppedImage(
-    imgName: string = "cropped-image",
+    imgName: string = "passport_photo",
     type: "jpg" | "png" = "jpg",
   ) {
     fetch(croppedImage)
@@ -91,9 +90,9 @@
 <section class="main-container">
   <div class="sub-container dont-print">
     <header>Make Passport Size Photo </header>
-   
-      <input type="file" style="max-width:550px" accept="image/*" onchange={onFileChange} />
-    
+
+      <input placeholder="Choose File" type="file" style="max-width:550px" accept="image/*" onchange={onFileChange} />
+
     <div class="img-holder">
       <div class="cropper-wrapper image-placeholder">
         <Cropper
@@ -112,18 +111,19 @@
         alt="Cropped profile"
       />
     </div>
-    <footer>
+    <footer role="group">
       <!-- <button disabled={appState === "initial"} onclick={back}>Back</button> -->
       <button disabled={appState !== "cropping" && appState !== "cropped"} onclick={cropImage}>Crop</button>
       <button
         disabled={appState !== "cropped"}
-        onclick={() => downloadCroppedImage()}>Download single</button
+        onclick={() => downloadCroppedImage()}>Download</button
       >
       <button disabled={appState !== "cropped"} onclick={() => window.print()}
         >Printable</button
       >
     </footer>
   </div>
+  <HowToUse />
   <section class="only-print">
     <GridPhoto {croppedImage} {items} />
   </section>
@@ -141,6 +141,8 @@
     align-items: center;
   }
   .sub-container {
+    max-width: 740px;
+    margin: 0 auto;
     display: grid;
     padding: 1rem;
     gap: 1rem;
@@ -157,10 +159,12 @@
     /* border: 1px solid red; */
   }
   .guide-box {
+    --border:3px dashed var(--pico-primary-border);
     --ratio: 2/3;
     --padding: calc(1 / 3 * 0.5);
     position: absolute;
-    border: 1px dashed blue;
+    border-top: var(--border);
+     border-bottom: var(--border);
     width: calc(100% * var(--ratio));
     /* guide height 34.5mm from top for 45mm thus 10% of 270px */
     /* calc  */
