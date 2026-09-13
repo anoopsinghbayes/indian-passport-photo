@@ -18,9 +18,17 @@
   const DESIRED_HEIGHT = 810;
   const ASPECT_RATIO = 7 / 9;
   const image_ratio = 4 / 5;
-  const PRINT_SHEET_ROWS = 2;
-  const PRINT_SHEET_COLUMNS = 3;
-  const PRINT_PHOTO_SIZE_MM = 50.8;
+  const PRINT_PHOTO_SIZE_IN = 2;
+  const sheetOptions = [
+    { id: "4x6", label: "4 x 6 in", widthIn: 6, heightIn: 4, columns: 3, rows: 2 },
+    { id: "5x7", label: "5 x 7 in", widthIn: 7, heightIn: 5, columns: 3, rows: 2 },
+    { id: "8x10", label: "8 x 10 in", widthIn: 10, heightIn: 8, columns: 5, rows: 4 },
+    { id: "letter", label: "Letter", widthIn: 8.5, heightIn: 11, columns: 4, rows: 5 },
+    { id: "a4", label: "A4", widthIn: 8.27, heightIn: 11.69, columns: 4, rows: 5 },
+  ];
+  let selectedSheetId = $state("4x6");
+  let printColumns = $state(3);
+  let printRows = $state(2);
   let crop = $state({ x: 0, y: 0 });
   const imageWidth = DESIRED_WIDTH * image_ratio;
   const imageHeight = DESIRED_HEIGHT * image_ratio;
@@ -31,6 +39,40 @@
     "./630x810.svg"
   );
   let printableSheet = $state<string>("./630x810.svg");
+  let selectedSheet = $derived(
+    sheetOptions.find((sheet) => sheet.id === selectedSheetId) ?? sheetOptions[0],
+  );
+  let maxPrintColumns = $derived(Math.floor(selectedSheet.widthIn / PRINT_PHOTO_SIZE_IN));
+  let maxPrintRows = $derived(Math.floor(selectedSheet.heightIn / PRINT_PHOTO_SIZE_IN));
+  let printPageCss = $derived(`
+    @page {
+      size: ${selectedSheet.widthIn}in ${selectedSheet.heightIn}in;
+      margin: 0;
+    }
+
+    @media print {
+      html,
+      body,
+      #app,
+      .only-print {
+        width: ${selectedSheet.widthIn}in;
+        height: ${selectedSheet.heightIn}in;
+      }
+    }
+  `);
+
+  $effect(() => {
+    const styleId = "dynamic-print-page-size";
+    let style = document.getElementById(styleId) as HTMLStyleElement | null;
+
+    if (!style) {
+      style = document.createElement("style");
+      style.id = styleId;
+      document.head.appendChild(style);
+    }
+
+    style.textContent = printPageCss;
+  });
 
   function onCropComplete(e: {
     percent: { width: number; height: number; x: number; y: number };
@@ -57,13 +99,47 @@
       DESIRED_WIDTH,
       DESIRED_HEIGHT,
     );
-    printableSheet = await createPrintableSheet(croppedImage, {
-      rows: PRINT_SHEET_ROWS,
-      columns: PRINT_SHEET_COLUMNS,
-      photoWidthMm: PRINT_PHOTO_SIZE_MM,
-      photoHeightMm: PRINT_PHOTO_SIZE_MM,
-    });
+    await rebuildPrintableSheet(croppedImage);
     appState = "cropped";
+  }
+
+  async function rebuildPrintableSheet(imageSrc = croppedImage) {
+    printableSheet = await createPrintableSheet(imageSrc, {
+      rows: Math.min(printRows, maxPrintRows),
+      columns: Math.min(printColumns, maxPrintColumns),
+      photoWidthIn: PRINT_PHOTO_SIZE_IN,
+      photoHeightIn: PRINT_PHOTO_SIZE_IN,
+      sheetWidthIn: selectedSheet.widthIn,
+      sheetHeightIn: selectedSheet.heightIn,
+    });
+  }
+
+  function onSheetChange(event: Event) {
+    const select = event.target;
+    if (!(select instanceof HTMLSelectElement)) return;
+
+    const nextSheet = sheetOptions.find((sheet) => sheet.id === select.value);
+    if (!nextSheet) return;
+
+    selectedSheetId = nextSheet.id;
+    printColumns = nextSheet.columns;
+    printRows = nextSheet.rows;
+    if (appState === "cropped") rebuildPrintableSheet();
+  }
+
+  function onGridChange(event: Event, direction: "columns" | "rows") {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+
+    const max = direction === "columns" ? maxPrintColumns : maxPrintRows;
+    const value = Math.min(max, Math.max(1, Number(input.value)));
+    if (direction === "columns") {
+      printColumns = value;
+    } else {
+      printRows = value;
+    }
+
+    if (appState === "cropped") rebuildPrintableSheet();
   }
   function onFileChange(event: Event) {
     const input = event.target;
@@ -116,6 +192,40 @@
         >Printable</button
       >
     </header>
+    <section class="print-settings" aria-label="Print settings">
+      <label>
+        Sheet
+        <select value={selectedSheetId} onchange={onSheetChange}>
+          {#each sheetOptions as sheet}
+            <option value={sheet.id}>{sheet.label}</option>
+          {/each}
+        </select>
+      </label>
+      <label>
+        Across
+        <input
+          type="number"
+          min="1"
+          max={maxPrintColumns}
+          value={printColumns}
+          oninput={(event) => onGridChange(event, "columns")}
+        />
+      </label>
+      <label>
+        Down
+        <input
+          type="number"
+          min="1"
+          max={maxPrintRows}
+          value={printRows}
+          oninput={(event) => onGridChange(event, "rows")}
+        />
+      </label>
+      <p>
+        Each printed photo stays 2 x 2 in. This sheet fits up to
+        {maxPrintColumns} across and {maxPrintRows} down.
+      </p>
+    </section>
 
     <div class="img-holder">
       <div class="cropper-wrapper image-placeholder">
@@ -141,7 +251,11 @@
   </div>
   <HowToUse />
   <section class="only-print">
-    <GridPhoto printableSheet={printableSheet} />
+    <GridPhoto
+      printableSheet={printableSheet}
+      sheetWidthIn={selectedSheet.widthIn}
+      sheetHeightIn={selectedSheet.heightIn}
+    />
   </section>
 </section>
 
@@ -165,6 +279,22 @@
 
     place-items: center;
     /* grid-template-columns: 1fr 1fr; */
+  }
+  .print-settings {
+    width: min(100%, 740px);
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) repeat(2, minmax(92px, 120px));
+    gap: 0.75rem;
+    align-items: end;
+  }
+  .print-settings label {
+    margin: 0;
+  }
+  .print-settings p {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--pico-muted-color);
+    font-size: 0.9rem;
   }
   /* Style for the Cropper wrapper */
   .cropper-wrapper {
@@ -197,5 +327,13 @@
   input[type="file"] {
 
   max-width: 30% ;
+  }
+  @media (max-width: 720px) {
+    .print-settings {
+      grid-template-columns: 1fr;
+    }
+    input[type="file"] {
+      max-width: 100%;
+    }
   }
 </style>

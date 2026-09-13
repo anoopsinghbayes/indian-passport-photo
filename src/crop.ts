@@ -79,6 +79,8 @@ export const createPrintableSheet = async (
     options: {
         columns?: number;
         rows?: number;
+        photoWidthIn?: number;
+        photoHeightIn?: number;
         photoWidthMm?: number;
         photoHeightMm?: number;
         sheetWidthIn?: number;
@@ -88,10 +90,12 @@ export const createPrintableSheet = async (
     } = {},
 ): Promise<string> => {
     const {
-        columns = 2,
-        rows = 3,
-        photoWidthMm = 35,
-        photoHeightMm = 45,
+        columns = 3,
+        rows = 2,
+        photoWidthIn = 2,
+        photoHeightIn = 2,
+        photoWidthMm,
+        photoHeightMm,
         sheetWidthIn = 6,
         sheetHeightIn = 4,
         dpi = 300,
@@ -113,9 +117,9 @@ export const createPrintableSheet = async (
                 return;
             }
 
-            const mmToPx = (mm: number) => Math.round((mm / 25.4) * dpi);
-            const photoWidthPx = mmToPx(photoWidthMm);
-            const photoHeightPx = mmToPx(photoHeightMm);
+            const mmToIn = (mm: number) => mm / 25.4;
+            const photoWidthPx = Math.round((photoWidthMm ? mmToIn(photoWidthMm) : photoWidthIn) * dpi);
+            const photoHeightPx = Math.round((photoHeightMm ? mmToIn(photoHeightMm) : photoHeightIn) * dpi);
             const paddingPx = Math.round(paddingIn * dpi);
 
             ctx.fillStyle = "#fff";

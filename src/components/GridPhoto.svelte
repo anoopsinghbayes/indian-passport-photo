@@ -1,8 +1,11 @@
 <script lang="ts">
-    let { printableSheet } = $props();
+    let { printableSheet, sheetWidthIn, sheetHeightIn } = $props();
 </script>
-<div class="print-sheet">
-    <img src={printableSheet} class="print-sheet-image" alt="6x4 photo sheet" />
+<div
+    class="print-sheet"
+    style={`width: ${sheetWidthIn}in; height: ${sheetHeightIn}in;`}
+>
+    <img src={printableSheet} class="print-sheet-image" alt="Printable layout" />
 </div>
 <style>
   .print-sheet {
@@ -15,8 +18,8 @@
   }
 
   .print-sheet-image {
-    width: 6in;
-    height: 4in;
+    width: 100%;
+    height: 100%;
     display: block;
   }
 </style>
