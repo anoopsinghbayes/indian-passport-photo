@@ -1,29 +1,22 @@
 <script lang="ts">
-    let {croppedImage,items}=$props();
+    let { printableSheet } = $props();
 </script>
-<div class="print-grid">
-    {#each items as _, index}
-        <div class="print-grid-item">
-        <img src="{croppedImage}" alt="Cropped Image {index + 1}" style="width:35mm; height:45mm;" />
-        </div>
-    {/each}
+<div class="print-sheet">
+    <img src={printableSheet} class="print-sheet-image" alt="6x4 photo sheet" />
 </div>
 <style>
-    .print-grid {
-    display: grid;
-    place-content: center;
-    grid-template-columns: repeat(5, max-content);
-    /* gap: 2mm; */
-    margin-top: 2rem;
-    /* border-left: 1px dashed #000; */
-    /* border-top: 1px dashed #000; */
+  .print-sheet {
+    width: 6in;
+    height: 4in;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
   }
-  .print-grid-item{
-    position: relative;
-    padding: .5rem;
-    border: 1px dashed #000;
-    /* make the border like border-collapse */
-    margin-top: -1px;
-    margin-left: -1px;
+
+  .print-sheet-image {
+    width: 6in;
+    height: 4in;
+    display: block;
   }
 </style>

@@ -1,6 +1,10 @@
 <script lang="ts">
   import Cropper from "svelte-easy-crop";
-  import { getCroppedImg, downloadBlobImage } from "./crop";
+  import {
+    createPrintableSheet,
+    downloadBlobImage,
+    getCroppedImg,
+  } from "./crop";
   import GridPhoto from "./components/GridPhoto.svelte";
   import HowToUse from "./components/HowToUse.svelte";
   // Define the app state
@@ -14,8 +18,9 @@
   const DESIRED_HEIGHT = 810;
   const ASPECT_RATIO = 7 / 9;
   const image_ratio = 4 / 5;
-  const items = Array(10).fill(0); // Array to render multiple images for printing
-  // console.log("Items for print:", items);
+  const PRINT_SHEET_ROWS = 2;
+  const PRINT_SHEET_COLUMNS = 3;
+  const PRINT_PHOTO_SIZE_MM = 50.8;
   let crop = $state({ x: 0, y: 0 });
   const imageWidth = DESIRED_WIDTH * image_ratio;
   const imageHeight = DESIRED_HEIGHT * image_ratio;
@@ -25,6 +30,7 @@
   let croppedImage=$state<string>(
     "./630x810.svg"
   );
+  let printableSheet = $state<string>("./630x810.svg");
 
   function onCropComplete(e: {
     percent: { width: number; height: number; x: number; y: number };
@@ -51,6 +57,12 @@
       DESIRED_WIDTH,
       DESIRED_HEIGHT,
     );
+    printableSheet = await createPrintableSheet(croppedImage, {
+      rows: PRINT_SHEET_ROWS,
+      columns: PRINT_SHEET_COLUMNS,
+      photoWidthMm: PRINT_PHOTO_SIZE_MM,
+      photoHeightMm: PRINT_PHOTO_SIZE_MM,
+    });
     appState = "cropped";
   }
   function onFileChange(event: Event) {
@@ -73,12 +85,14 @@
     }
     appState = "cropping";
     croppedImage = "./630x810.svg";
+    printableSheet = "./630x810.svg";
   }
 
   function back() {
     if (appState === "cropped") {
       appState = "cropping";
       croppedImage = "./630x810.svg";
+      printableSheet = "./630x810.svg";
     } else if (appState === "cropping") {
       appState = "initial";
       init_image = "./630x810.svg";
@@ -89,9 +103,19 @@
 <!-- <UploadPhoto /> -->
 <section class="main-container">
   <div class="sub-container dont-print">
-    <header>Make Passport Size Photo </header>
-
-      <input placeholder="Choose File" type="file" style="max-width:550px" accept="image/*" onchange={onFileChange} />
+    <h2>Make Passport Size Photo </h2>
+    <header role="group">
+      <input placeholder="Choose File" type="file"  accept="image/*" onchange={onFileChange} />
+<!-- <button disabled={appState === "initial"} onclick={back}>Back</button> -->
+      <button disabled={appState !== "cropping" && appState !== "cropped"} onclick={cropImage}>Crop</button>
+      <button
+        disabled={appState !== "cropped"}
+        onclick={() => downloadCroppedImage()}>Download</button
+      >
+      <button disabled={appState !== "cropped"} onclick={() => window.print()}
+        >Printable</button
+      >
+    </header>
 
     <div class="img-holder">
       <div class="cropper-wrapper image-placeholder">
@@ -112,20 +136,12 @@
       />
     </div>
     <footer role="group">
-      <!-- <button disabled={appState === "initial"} onclick={back}>Back</button> -->
-      <button disabled={appState !== "cropping" && appState !== "cropped"} onclick={cropImage}>Crop</button>
-      <button
-        disabled={appState !== "cropped"}
-        onclick={() => downloadCroppedImage()}>Download</button
-      >
-      <button disabled={appState !== "cropped"} onclick={() => window.print()}
-        >Printable</button
-      >
+      
     </footer>
   </div>
   <HowToUse />
   <section class="only-print">
-    <GridPhoto {croppedImage} {items} />
+    <GridPhoto printableSheet={printableSheet} />
   </section>
 </section>
 
@@ -177,5 +193,9 @@
   .image-placeholder {
     width: 252px;
     aspect-ratio: 7/9;
+  }
+  input[type="file"] {
+
+  max-width: 30% ;
   }
 </style>

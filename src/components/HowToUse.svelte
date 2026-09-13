@@ -14,7 +14,7 @@
             </li>
             <li>
                 For printing multiple passport size photos, click the <em>"Printable"</em>
-                button to print a 5 X 2 i.e 10 cropped images.
+                button to print a 6 x 4 sheet with 6 cropped 2 x 2 images.
             </li>
         </ol>
     </div>
